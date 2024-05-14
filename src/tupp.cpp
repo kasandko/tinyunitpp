@@ -36,9 +36,10 @@ struct status
     enum class status_code
     {
         _UNDEFINED,
-        _SUCCESS,
+        SUCCESS,
         INVALID_KEY,
         INVALID_KEY_USAGE,
+        TESTS_FAIL,
         BAD_CMD,
         RUN_HELP,
         RUN_VERSION,
@@ -213,7 +214,7 @@ void tupp_internal::apply_case()
 int tupp_internal::run(int argc, char* argv[])
 {
     status st = parse_cmd(argc, argv);
-    if (st.code != status::status_code::_SUCCESS)
+    if (st.code != status::status_code::SUCCESS)
         return handle_status(st);
 
     st = apply_cmd_params();
@@ -252,7 +253,7 @@ status tupp_internal::parse_cmd(int argc, char* argv[])
         }
     }
 
-    return status(status::status_code::_SUCCESS);
+    return status(status::status_code::SUCCESS);
 }
 
 std::string tupp_internal::parse_cmd_key(const std::string & arg)
@@ -416,10 +417,15 @@ int tupp_internal::handle_status(const status & st)
     case status::status_code::RUN_VERSION:
         show_version();
         return 0;
-    case status::status_code::_SUCCESS:
+    case status::status_code::SUCCESS:
+        return 0;
     case status::status_code::_UNDEFINED:
         show_error("Unknown error");
         return 200;
+    case status::status_code::TESTS_FAIL:
+        return 1;
+    default:
+        return 0;
     }
 }
 
@@ -503,6 +509,11 @@ int tupp_internal::run_tests()
     report_msg += ", Fail: " + std::to_string(failed_count);
     report_msg += ", Pass: " + std::to_string(tests_count - failed_count);
     print(message_type::REPORT, report_msg, true);
+
+    if (failed_count > 0u)
+        return handle_status(status(status::status_code::TESTS_FAIL));
+    else
+        return handle_status(status(status::status_code::SUCCESS));
 }
 
 
