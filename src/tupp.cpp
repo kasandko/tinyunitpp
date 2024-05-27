@@ -1,3 +1,12 @@
+/**************************************************************************************************
+ * @file
+ * @author Konovalov Aleksander
+ * @copyright This file is part of library TinyUnit++ and has the same license. @see LICENSE.txt
+ * @brief It is main include file.
+ * 
+ * This file contains TinyUnit++ functional implementations.
+ *************************************************************************************************/
+
 #include "tupp.hpp"
 
 #include <iostream>
@@ -598,7 +607,7 @@ void tupp::assert_tf(bool v, bool expected, const std::string & msg, const std::
 void tupp::assert_flt(float a, float b, const std::string & msg, const std::string & additional_msg, size_t line)
 {
     assert(
-        std::fabs(a - b) <= 0.00001f,
+        std::fabs(a - b) <= FLOAT_CHECKING_ACCURACY,
         msg, additional_msg, line
     );
 }
