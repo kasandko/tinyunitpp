@@ -12,7 +12,7 @@ const unsigned int PROG_VER_MAJ = 0u;
 const unsigned int PROG_VER_MIN = 2u;
 const unsigned int PROG_VER_COR = 0u;
 const std::string PROG_COPYRIGHT = "Copyright (c) 2024: Konovalov Aleksander, BSD-2-Clause license.";
-const std::string PROG_URL = "https://github.com/kasandko/";
+const std::string PROG_URL = "https://github.com/kasandko/tinyunitpp";
 
 struct case_params
 {
@@ -99,14 +99,15 @@ private:
 
     void init_case_params();
     status parse_cmd(int argc, char* argv[]);
-    std::string parse_cmd_key(const std::string & arg);
+    static std::string parse_cmd_key(const std::string & arg);
     status apply_cmd_params();
     int handle_status(const status & st);
-    void print(message_type type, const std::string & message, bool cr);
+    void print(message_type type, const std::string & message, bool cr) const;
+    static std::string make_tab(size_t tabs_count);
 
-    void show_help() const;
-    void show_version() const;
-    void show_error(const std::string & error_msg) const;
+    static void show_help();
+    static void show_version();
+    static void show_error(const std::string & error_msg);
     int run_tests();
 
 private:
@@ -115,7 +116,7 @@ private:
     std::vector<std::string> _case_messages;
     bool _case_result = true;
 
-    std::unordered_map<std::string, std::string> _cmd_params;
+    std::unordered_map<std::string, std::vector<std::string>> _cmd_params;
     std::unordered_set<std::string> _tests_to_run;
     std::unordered_map<std::string, std::function<void()>> _all_tests;
 
@@ -241,19 +242,25 @@ status tupp_internal::parse_cmd(int argc, char* argv[])
         if (const std::string new_key = parse_cmd_key(s_argv); !new_key.empty())
         {
             if (!key.empty())
-                _cmd_params.emplace(key, "");
+                _cmd_params.emplace(key, std::vector<std::string>());
             key = new_key;
         }
         else
         {
             if (key.empty())
-                return status(status::status_code::BAD_CMD, "Invalid key: '" + s_argv + "'");
+                return {status::status_code::BAD_CMD, "Invalid key: '" + s_argv + "'"};
 
-            _cmd_params.emplace(key, s_argv);
+            auto it = _cmd_params.find(key);
+            if (it == _cmd_params.end())
+                it = _cmd_params.emplace(key, std::vector<std::string>()).first;
+            it->second.push_back(s_argv);
         }
     }
 
-    return status(status::status_code::SUCCESS);
+    if (!key.empty())
+        _cmd_params.emplace(key, std::vector<std::string>());
+
+    return {status::status_code::SUCCESS};
 }
 
 std::string tupp_internal::parse_cmd_key(const std::string & arg)
@@ -273,42 +280,44 @@ std::string tupp_internal::parse_cmd_key(const std::string & arg)
 status tupp_internal::apply_cmd_params()
 {
     status::status_code result = status::status_code::_UNDEFINED;
-    for (const auto & [key, value] : _cmd_params)
+    for (const auto & [key, values] : _cmd_params)
     {
         if (key == "h" || key == "help")
         {
-            if (result == status::status_code::_UNDEFINED)
-                return status(status::status_code::RUN_HELP);
-            else
-                return status(status::status_code::INVALID_KEY_USAGE, "Can not use '" + key + "' in this cotext");
+            return result == status::status_code::_UNDEFINED
+                ? status(status::status_code::RUN_HELP)
+                : status(status::status_code::INVALID_KEY_USAGE, "Can not use '" + key + "' in this context");
         }
 
         if (key == "v" || key == "version")
         {
-            if (result == status::status_code::_UNDEFINED)
-                return status(status::status_code::RUN_VERSION);
-            else
-                return status(status::status_code::INVALID_KEY_USAGE, "Can not use '" + key + "' in this cotext");
+            return result == status::status_code::_UNDEFINED
+                ? status(status::status_code::RUN_VERSION)
+                : status(status::status_code::INVALID_KEY_USAGE, "Can not use '" + key + "' in this context");
         }
 
         if (key == "t" || key == "test")
         {
-            _tests_to_run.emplace(value);
+            for (const auto & value : values)
+                _tests_to_run.emplace(value);
         }
         else if (key == "s" || key == "silent")
         {
-            if (value.empty())
-                return status(status::status_code::INVALID_KEY, "Needed value for '" + key + "'");
+            if (values.empty())
+                return {status::status_code::INVALID_KEY, "Needed value for '" + key + "'"};
+
+            if (values.size() > 1u)
+                return {status::status_code::INVALID_KEY_USAGE, "Multiple use of key '" + key + "'"};
 
             int silent_lvl;
             try
             {
                 size_t pos;
-                silent_lvl = std::stoi(value, &pos);
+                silent_lvl = std::stoi(values[0u], &pos);
             }
-            catch(const std::exception & e)
+            catch(const std::exception &)
             {
-                return status(status::status_code::INVALID_KEY, "Invalid value for '" + key + "'");
+                return {status::status_code::INVALID_KEY, "Invalid value for '" + key + "'"};
             }
 
             if (silent_lvl == 1000)
@@ -338,20 +347,22 @@ status tupp_internal::apply_cmd_params()
         }
         else if (key == "a" || key == "continue_after_assert")
         {
-            if (!value.empty())
-                return status(status::status_code::INVALID_KEY, "Key '" + key + "' doesn't have any value");
+            if (!values.empty())
+                return {status::status_code::INVALID_KEY, "Key '" + key + "' doesn't have any value"};
             _config.continue_after_assert = true;
         }
         else
         {
-            return status(status::status_code::INVALID_KEY, "Unknown key '" + key + "'");
+            return {status::status_code::INVALID_KEY, "Unknown key '" + key + "'"};
         }
+
+        result = status::status_code::RUN_TEST;
     }
 
-    return status(status::status_code::RUN_TEST);
+    return result;
 }
 
-void tupp_internal::print(message_type type, const std::string & message, bool cr)
+void tupp_internal::print(message_type type, const std::string & message, bool cr) const
 {
     if (_config.hide_all_messages)
         return;
@@ -361,10 +372,15 @@ void tupp_internal::print(message_type type, const std::string & message, bool c
     {
     case message_type::FAIL:
     case message_type::SUCCESS:
-    case message_type::TEST_NAME:
         if (_config.hide_test_names)
             return;
         msg = message;
+        break;
+
+    case message_type::TEST_NAME:
+        if (_config.hide_test_names)
+            return;
+        msg = make_tab(1u) + message;
         break;
 
     case message_type::HEADER:
@@ -376,13 +392,13 @@ void tupp_internal::print(message_type type, const std::string & message, bool c
     case message_type::TEST_MESSAGE:
         if (_config.hide_test_messages)
             return;
-        msg = message;
+        msg = make_tab(2u) + message;
         break;
 
     case message_type::REPORT:
         if (_config.hide_report)
             return;
-        msg = "  " + message;
+        msg = make_tab(1u) + message;
         break;
 
     case message_type::DEFAULT:
@@ -394,6 +410,12 @@ void tupp_internal::print(message_type type, const std::string & message, bool c
     std::cout << msg;
     if (cr)
         std::cout << std::endl;
+}
+
+std::string tupp_internal::make_tab(size_t tabs_count)
+{
+    static constexpr size_t TAB_SIZE = 2u;
+    return std::string(tabs_count * TAB_SIZE, ' ');
 }
 
 int tupp_internal::handle_status(const status & st)
@@ -429,7 +451,7 @@ int tupp_internal::handle_status(const status & st)
     }
 }
 
-void tupp_internal::show_help() const
+void tupp_internal::show_help()
 {
     std::cout << "-a --continue_after_assert  Continue to run test after fail assert." << std::endl;
     std::cout << "-h --help                   Show this help." << std::endl;
@@ -446,7 +468,7 @@ void tupp_internal::show_help() const
     std::cout << "-v --version                Show version." << std::endl;
 }
 
-void tupp_internal::show_version() const
+void tupp_internal::show_version()
 {
     std::cout << PROG_NAME
         << " v" << PROG_VER_MAJ << "." << PROG_VER_MIN << "." << PROG_VER_COR << std::endl;
@@ -454,7 +476,7 @@ void tupp_internal::show_version() const
     std::cout << PROG_URL << std::endl;
 }
 
-void tupp_internal::show_error(const std::string & error_msg) const
+void tupp_internal::show_error(const std::string & error_msg)
 {
     std::cout << PROG_NAME << std::endl;
     std::cout << error_msg << std::endl;

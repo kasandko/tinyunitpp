@@ -8,25 +8,25 @@
 #undef TUPP_ASSERT
 #endif
 #define TUPP_ASSERT(V_A, V_B, ...)                                                  \
-    tupp::t_assert(V_A == V_B, #V_A ## " == " ## #V_B, __LINE__, __VA_ARGS__);
+    tupp::t_assert(V_A == V_B, #V_A ## " == " ## #V_B, __LINE__, __VA_ARGS__)
 
 #ifdef TUPP_N_ASSERT
 #undef TUPP_N_ASSERT
 #endif
-#define TUPP_N_ASSERT(V_A, V_B, MSG, ...)                                           \
-    tupp::t_assert(V_A != V_B, #V_A ## " != " ## #V_B, __LINE__, __VA_ARGS__);
+#define TUPP_N_ASSERT(V_A, V_B, ...)                                                \
+    tupp::t_assert(V_A != V_B, #V_A ## " != " ## #V_B, __LINE__, __VA_ARGS__)
 
 #ifdef TUPP_ASSERT_TRUE
 #undef TUPP_ASSERT_TRUE
 #endif
-#define TUPP_ASSERT_TRUE(V, MSG, ...)                                               \
-    tupp::t_assert_tf(V, true, #V, __LINE__, __VA_ARGS__);
+#define TUPP_ASSERT_TRUE(V, ...)                                                    \
+    tupp::t_assert_tf(V, true, #V, __LINE__, __VA_ARGS__)
 
 #ifdef TUPP_ASSERT_FALSE
 #undef TUPP_ASSERT_FALSE
 #endif
-#define TUPP_ASSERT_FALSE(V, MSG, ...)                                              \
-    tupp::t_assert_tf(V, false, #V, __LINE__, __VA_ARGS__);
+#define TUPP_ASSERT_FALSE(V, ...)                                                   \
+    tupp::t_assert_tf(V, false, #V, __LINE__, __VA_ARGS__)
 
 #ifdef TUPP_MESSAGE
 #undef TUPP_MESSAGE
@@ -37,14 +37,25 @@
 #ifdef TUPP_ASSERT_F
 #undef TUPP_ASSERT_F
 #endif
-#define TUPP_ASSERT_F(V_A, V_B, MSG, ...)                                           \
-    tupp::t_assert_flt(V_A, V_B, #V_A ## " == " ## #V_B, __LINE__, __VA_ARGS__);
+#define TUPP_ASSERT_F(V_A, V_B, ...)                                                \
+    tupp::t_assert_flt(V_A, V_B, #V_A ## " == " ## #V_B, __LINE__, __VA_ARGS__)
+
+#ifdef TUPP_ADD_TEST
+#undef TUPP_ADD_TEST
+#endif
+#define TUPP_ADD_TEST(TEST_NAME)                                                    \
+    tupp::add_test(&TEST_NAME, #TEST_NAME)
 
 class tupp_internal;
 
 class tupp
 {
 public:
+
+    tupp(const tupp &) = delete;
+    tupp(const tupp &&) = delete;
+    tupp & operator=(tupp &) = delete;
+    tupp & operator=(tupp &&) = delete;
 
     using TestFunc = std::function<void()>;
 
@@ -60,9 +71,10 @@ public:
     template <typename... TMsg>
     static std::string make_additional(const TMsg & ... additionals)
     {
-        std::string additional;
-        additional += additionals...;
-        return additional;
+        if constexpr (sizeof... (additionals) > 0u)
+            return (... + std::string(additionals));
+        else
+            return {};
     }
 
     template <typename... TMsg>
@@ -90,10 +102,6 @@ private:
 
     tupp();
     ~tupp();
-    tupp(const tupp &) = delete;
-    tupp(const tupp &&) = delete;
-    tupp & operator=(tupp &) = delete;
-    tupp & operator=(tupp &&) = delete;
 
     tupp_internal * _internal;
 };
