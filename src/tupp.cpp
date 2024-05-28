@@ -3,7 +3,7 @@
  * @author Konovalov Aleksander
  * @copyright This file is part of library TinyUnit++ and has the same license. @see LICENSE.txt
  * @brief It is main include file.
- * 
+ *
  * This file contains TinyUnit++ functional implementations.
  *************************************************************************************************/
 
@@ -367,6 +367,9 @@ status tupp_internal::apply_cmd_params()
 
         result = status::status_code::RUN_TEST;
     }
+
+    if (result == status::status_code::_UNDEFINED)
+        result = status::status_code::RUN_TEST;
 
     return result;
 }
