@@ -68,7 +68,7 @@
 
 class tupp_internal;
 
-/// @brief 
+/// @brief Main class with functional for make unit tests.
 class tupp
 {
 public:
@@ -107,35 +107,48 @@ public:
     /// This method is used by `TUPP_ADD_TEST` macro.
     static void add_test(const TestFunc & test_func, const std::string & name);
 
-    /// @brief 
+    /// @brief Method for check that `v` is not false. Used for assertion macros.
     /// @param v - result of a test passing. Assertion is activated if this paramenter is `false`.
-    /// @param msg 
+    /// @param msg - displayed message. This message field used for auto generating and displayed
+    ///     checked code string.
     /// @param line - code line number.
-    /// @param additionals 
+    /// @param additionals - additionals displayed message parts. This parameters for user defined
+    ///     messages.
+    ///
+    /// This method is used by `TUPP_ASSERT` and `TUPP_N_ASSERT` macros.
     template <typename... TMsg>
     static void t_assert(bool v, const std::string & msg, size_t line, const TMsg & ... additionals)
     {
         assert(v, msg, make_additional(additionals...), line);
     }
 
-    /// @brief 
-    /// @param v 
-    /// @param expected 
-    /// @param msg 
+    /// @brief Method for check that `v` is equal `expected`. Used for boolean assertion macros.
+    /// @param v - passed tested boolean value.
+    /// @param expected - expected value.
+    /// @param msg displayed message. This message field used for auto generating and displayed
+    ///     checked code string.
     /// @param line - code line number.
-    /// @param additionals 
+    /// @param additionals - additionals displayed message parts. This parameters for user defined
+    ///     messages.
+    ///
+    /// Assertion is activated if `v` is not equal `expected`. This method is used by
+    /// `TUPP_ASSERT_TRUE` and `TUPP_ASSERT_FALSE` macros.
     template <typename... TMsg>
     static void t_assert_tf(bool v, bool expected, const std::string & msg, size_t line, const TMsg & ... additionals)
     {
         assert_tf(v, expected, msg, make_additional(additionals...), line);
     }
 
-    /// @brief 
-    /// @param a 
-    /// @param b 
-    /// @param msg 
+    /// @brief Method for check equality of two float variables. Used for float assertion macros.
+    /// @param a - first tested variable.
+    /// @param b - second tested variable.
+    /// @param msg displayed message. This message field used for auto generating and displayed
+    ///     checked code string.
     /// @param line - code line number.
-    /// @param additionals 
+    /// @param additionals - additionals displayed message parts. This parameters for user defined
+    ///     messages.
+    ///
+    /// Assertion is activated if `a` is different from `b` by `FLOAT_CHECKING_ACCURACY`.
     template <typename... TMsg>
     static void t_assert_flt(float a, float b, const std::string & msg, size_t line, const TMsg & ... additionals)
     {
