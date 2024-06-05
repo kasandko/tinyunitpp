@@ -19,28 +19,28 @@
 #undef TUPP_ASSERT
 #endif
 #define TUPP_ASSERT(V_A, V_B, ...)                                                  \
-    tupp::t_assert(V_A == V_B, #V_A ## " == " ## #V_B, __LINE__, __VA_ARGS__)
+    tupp::t_assert(V_A == V_B, #V_A  " == "  #V_B, __LINE__, ##__VA_ARGS__)
 
 /// @brief Macro for checking the inequality of two variables.
 #ifdef TUPP_N_ASSERT
 #undef TUPP_N_ASSERT
 #endif
 #define TUPP_N_ASSERT(V_A, V_B, ...)                                                \
-    tupp::t_assert(V_A != V_B, #V_A ## " != " ## #V_B, __LINE__, __VA_ARGS__)
+    tupp::t_assert(V_A != V_B, #V_A  " != "  #V_B, __LINE__, ##__VA_ARGS__)
 
 /// @brief Macro for check that a variable is true.
 #ifdef TUPP_ASSERT_TRUE
 #undef TUPP_ASSERT_TRUE
 #endif
 #define TUPP_ASSERT_TRUE(V, ...)                                                    \
-    tupp::t_assert_tf(V, true, #V, __LINE__, __VA_ARGS__)
+    tupp::t_assert_tf(V, true, #V, __LINE__, ##__VA_ARGS__)
 
 /// @brief Macro for check that a variable is false.
 #ifdef TUPP_ASSERT_FALSE
 #undef TUPP_ASSERT_FALSE
 #endif
 #define TUPP_ASSERT_FALSE(V, ...)                                                   \
-    tupp::t_assert_tf(V, false, #V, __LINE__, __VA_ARGS__)
+    tupp::t_assert_tf(V, false, #V, __LINE__, ##__VA_ARGS__)
 
 /// @brief Macro for print a some message.
 #ifdef TUPP_MESSAGE
@@ -56,7 +56,7 @@
 #undef TUPP_ASSERT_F
 #endif
 #define TUPP_ASSERT_F(V_A, V_B, ...)                                                \
-    tupp::t_assert_flt(V_A, V_B, #V_A ## " == " ## #V_B, __LINE__, __VA_ARGS__)
+    tupp::t_assert_flt(V_A, V_B, #V_A " == " #V_B, __LINE__, ##__VA_ARGS__)
 
 /// @brief Macro for test addition.
 /// @param TEST_NAME - This is a test function name. It is also will be used as test name.

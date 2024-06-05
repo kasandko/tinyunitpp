@@ -26,7 +26,71 @@ assert'ов, архитектурная поддержка фикстур и moc
 
 ## Простой пример
 
-TODO:
+Создадим папку `tupp_example`. В неё положим `tupp.cpp`, `tupp.h` из папки `src`. Далее создадим
+в той же папке файл `main.cpp` со следующим содержимым:
+
+```cpp
+#include "tupp.hpp"
+
+void example_test_assert()
+{
+    int a = 5;
+    int b = 5;
+    int c = 6;
+
+    TUPP_MESSAGE("Example assert.");
+    TUPP_ASSERT(a, b);
+    TUPP_N_ASSERT(a, c);
+}
+
+void example_test_float()
+{
+    float a = 5.0f;
+    float b = 5.0f;
+
+    TUPP_MESSAGE("Example float.");
+    TUPP_ASSERT_F(a, b);
+}
+
+void example_test_bool()
+{
+    bool a = true;
+    bool b = false;
+
+    TUPP_MESSAGE("Example bool.");
+    TUPP_ASSERT_TRUE(a);
+    TUPP_ASSERT_FALSE(b);
+}
+
+int main(int argc, char* argv[])
+{
+    TUPP_ADD_TEST(example_test_assert);
+    TUPP_ADD_TEST(example_test_float);
+    TUPP_ADD_TEST(example_test_bool);
+
+    return tupp::run(argc, argv);
+}
+```
+
+Дале скомпилируем этот пример командами:
+```
+g++ -c ./main.cpp -o ./main.o -std=c++17
+g++ -c ./tupp.cpp -o ./tupp.o -std=c++17
+g++ ./tupp.o ./main.o -o ./main -std=c++17
+```
+
+Теперь запустим `main`. Должны получить следующий результат:
+```
+#### START ####
+  TEST 'example_test_bool': SUCCESS
+    Message: Example bool. Line: 28
+  TEST 'example_test_float': SUCCESS
+    Message: Example float. Line: 19
+  TEST 'example_test_assert': SUCCESS
+    Message: Example assert. Line: 9
+#### FINISH ####
+  Run: 3/3, Fail: 0, Pass: 3
+```
 
 ## Описание макросов
 
@@ -91,7 +155,7 @@ TUPP_ASSERT_TRUE(V, [MSG, [MSG, [...]]]);
 Пример:
 
 ```cpp
-bool a = true, bool b = false;
+bool a = true, b = false;
 TUPP_ASSERT_TRUE(a, "Exmaple message"); // Пройдёт успешно.
 TUPP_ASSERT_TRUE(b); // Будет сгенерирована ошибка.
 ```
@@ -114,7 +178,7 @@ TUPP_ASSERT_FALSE(V, [MSG, [MSG, [...]]]);
 Пример:
 
 ```cpp
-bool a = true, bool b = false;
+bool a = true, b = false;
 TUPP_ASSERT_FALSE(b, "Exmaple message"); // Пройдёт успешно.
 TUPP_ASSERT_FALSE(a); // Будет сгенерирована ошибка.
 ```
