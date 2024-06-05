@@ -2,6 +2,8 @@
 
 void test_fails()
 {
+    TUPP_MESSAGE("abcde");
+
     int a = 5;
     int b = 8;
     TUPP_ASSERT(a, b);

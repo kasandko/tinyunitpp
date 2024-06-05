@@ -93,6 +93,11 @@ public:
 
     void add_test(const std::function<void()> & func, const std::string & name);
 
+    void clear_case_params()
+    {
+        _case_params = std::nullopt;
+    }
+
 private:
 
     enum class message_type
@@ -175,6 +180,13 @@ void tupp_internal::apply_case()
     if (!_case_params)
         return;
 
+    struct cleaner
+    {
+        tupp_internal * internal;
+        explicit cleaner(tupp_internal * internal) : internal(internal) {}
+        ~cleaner() { internal->clear_case_params(); }
+    } obj_cleaner(this);
+
     std::string msg;
     if (!_case_params->has_result())
     {
@@ -215,9 +227,8 @@ void tupp_internal::apply_case()
         msg += " Line: " + std::to_string(*_case_params->line);
 
     _case_messages.push_back(msg);
-    _case_params = std::nullopt;
 
-    if (!_config.continue_after_assert)
+    if (_case_params->has_result() && !_config.continue_after_assert)
         throw tupp_exception();
 }
 
@@ -505,6 +516,7 @@ int tupp_internal::run_tests()
             print(message_type::TEST_NAME, "TEST '" + test_name + "': ", false);
             try
             {
+                _case_params = std::nullopt;
                 test_func();
             }
             catch (const tupp_exception &)
